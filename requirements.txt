@@ -1,0 +1,11 @@
+torch
+praw
+numpy
+pandas
+geopandas
+matplotlib
+seaborn
+nltk
+scikit-learn
+tensorflow
+tqdm
