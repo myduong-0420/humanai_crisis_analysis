@@ -2,3 +2,5 @@
 /data
 documents.zip
 test.txt
+confidential.json
+*.ipynb
