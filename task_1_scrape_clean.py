@@ -7,6 +7,7 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import re
 import demoji
+from datetime import datetime
 
 tqdm.pandas()
 
@@ -145,4 +146,7 @@ if __name__ == "__main__":
     print("Final DataFrame shape:", df.shape)
     df["title"] = df["title"].progress_apply(full_preprocessing_pipeline)
     df["content"] = df["content"].progress_apply(full_preprocessing_pipeline)
+    df["date_readable"] = df["date"].apply(
+        lambda t: datetime.utcfromtimestamp(t).strftime('%Y-%m-%d %H:%M:%S')
+        )
     # df.to_csv(rf"D:\humanai_crisis_analysis\data\reddit_posts.csv", index=False)

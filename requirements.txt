@@ -10,3 +10,8 @@ scikit-learn
 tensorflow
 tqdm
 demoji
+textblob
+vaderSentiment
+sentence-transformers
+gensim
+selenium
