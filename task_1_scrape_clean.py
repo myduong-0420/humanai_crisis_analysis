@@ -93,6 +93,7 @@ def full_preprocessing_pipeline(text):
 
 if __name__ == "__main__":
     secrets = "confidential.json"
+    data_path = rf"D:\humanai_crisis_analysis\data"
     keyword_list = [
         "drug addiction",
         "Suicide Watch",
@@ -149,4 +150,4 @@ if __name__ == "__main__":
     df["date_readable"] = df["date"].apply(
         lambda t: datetime.fromtimestamp(t).strftime('%Y-%m-%d %H:%M:%S')
         )
-    # df.to_csv(rf"D:\humanai_crisis_analysis\data\reddit_posts.csv", index=False)
+    # df.to_csv(rf"{data_path}\reddit_posts.csv", index=False)
