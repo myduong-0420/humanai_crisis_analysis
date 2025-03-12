@@ -204,7 +204,7 @@ if __name__ == "__main__":
 	all_phrases, ref_phrases = get_reference_text(data_path)
 	df = pd.read_csv(rf"{data_path}\reddit_posts.csv")
 	df_with_sa = df_sentiment(df)
-	# df_with_sa.to_csv(rf"D:\humanai_crisis_analysis\data\reddit_data_with_sa.csv", index=False)
+	# df_with_sa.to_csv(rf"D:\humanai_crisis_analysis\data\reddit_data_with_sa.pkl", index=False)
 	test_df = df_with_sa.sample(500)
 	test_df["content"] = test_df["content"].fillna("")
 	test_df["title"] = test_df["title"].fillna("")
@@ -213,4 +213,21 @@ if __name__ == "__main__":
 		lambda x: detect_high_risk_ngrams(x, all_phrases, n=5, threshold=0.6))
 	test_df = risk_category(test_df)
 	test_df.to_csv(rf"{data_path}\test_with_risk_words.csv", index=False)
-	print("Done!")
+	
+    # plot by sentiment and risk category: count of sentiment and risk category
+	sentiment_count = test_df.groupby(["s_class"]).size().reset_index(name="sentiment_count")
+	risk_count = test_df.groupby(["risk_category"]).size().reset_index(name="risk_count")
+	
+	fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+	ax1.bar(sentiment_count["s_class"], sentiment_count["sentiment_count"])
+	ax1.set_title("Sentiment Distribution")
+	ax1.set_xlabel("Sentiment")
+	ax1.set_ylabel("Count")
+	
+	ax2.bar(risk_count["risk_category"], risk_count["risk_count"])
+	ax2.set_title("Risk Category Distribution")
+	ax2.set_xlabel("Risk Category")
+	ax2.set_ylabel("Count")
+	
+	plt.savefig(rf"{data_path}\sentiment_risk_distribution.png")
+	plt.show()
