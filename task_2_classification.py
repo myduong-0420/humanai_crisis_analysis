@@ -101,7 +101,7 @@ def get_reference_text(data_path):
 def vader_sentiment(text):
 	analyzer = SentimentIntensityAnalyzer()
 	sentiment = analyzer.polarity_scores(text)
-	return sentiment["neg"], sentiment["neu"], sentiment["pos"] 	
+	return sentiment["neg"], sentiment["neu"], sentiment["pos"], sentiment["compound"]
 
 def textblob_sentiment(text):
 	text_doc = TextBlob(text)
@@ -109,14 +109,22 @@ def textblob_sentiment(text):
 	return sentiment[0], sentiment[1]
 
 def df_sentiment(df):
+	df["content"] = df["content"].fillna("")
+	df["title"] = df["title"].fillna("")
+	df["full_text"] = df["title"] + " " + df["content"]
+	df["v_neg"] = None
+	df["v_neu"] = None
+	df["v_pos"] = None
+	df["v_compound"] = None
+	df["t_polarity"] = None
+	df["t_subjectivity"] = None
 	for i, row in tqdm(df.iterrows(), total=len(df)):
-		if pd.isnull(row["content"]):
-			text = row["title"]
-		text = str(row["title"]) + " " + str(row["content"])
-		neg, neu, pos = vader_sentiment(text)
+		text = row["full_text"]
+		neg, neu, pos, compound = vader_sentiment(text)
 		df.at[i, "v_neg"] = neg
 		df.at[i, "v_neu"] = neu
 		df.at[i, "v_pos"] = pos
+		df.at[i, "v_compound"] = compound
 		df.at[i, "t_polarity"] = textblob_sentiment(text)[0]
 		df.at[i, "t_subjectivity"] = textblob_sentiment(text)[1]
 	return df
@@ -206,9 +214,6 @@ if __name__ == "__main__":
 	df_with_sa = df_sentiment(df)
 	# df_with_sa.to_csv(rf"D:\humanai_crisis_analysis\data\reddit_data_with_sa.pkl", index=False)
 	test_df = df_with_sa.sample(500)
-	test_df["content"] = test_df["content"].fillna("")
-	test_df["title"] = test_df["title"].fillna("")
-	test_df["full_text"] = test_df["title"] + " " + test_df["content"]
 	test_df["risk_words"] = test_df["full_text"].progress_apply(
 		lambda x: detect_high_risk_ngrams(x, all_phrases, n=5, threshold=0.6))
 	test_df = risk_category(test_df)

@@ -15,3 +15,6 @@ vaderSentiment
 sentence-transformers
 gensim
 selenium
+plotly
+spacy
+flair
