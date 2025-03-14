@@ -2,7 +2,7 @@ torch
 praw
 numpy
 pandas
-geopandas
+geopy
 matplotlib
 seaborn
 nltk
@@ -16,5 +16,6 @@ sentence-transformers
 gensim
 selenium
 plotly
+folium
 spacy
 flair

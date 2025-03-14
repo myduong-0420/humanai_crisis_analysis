@@ -9,7 +9,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import time
-import random
 
 tqdm.pandas()
 
@@ -75,6 +74,7 @@ low_concern = [
 ]
 
 def retrieve_seed_phrases(data_path, url):
+	"""Retrieve seed phrases from a reference webpage and save them to a text file."""
 	driver = webdriver.Chrome()
 	driver.maximize_window()
 	options = Options()
@@ -85,6 +85,15 @@ def retrieve_seed_phrases(data_path, url):
 	page_source = driver.page_source
 	with open(rf"{data_path}\references.html", "w", encoding="utf-8") as f:
 		f.write(page_source)
+		f.close()
+	with open(rf"{data_path}\references.html", "r", encoding="utf-8") as f:
+		soup = BeautifulSoup(f, "html.parser")
+		items = soup.find_all("li")
+		f.close()
+	with open(rf"{data_path}\references.txt", "w", encoding="utf-8") as f:
+		for item in items:
+			f.write(item.text)
+			f.write("\n")
 		f.close()
 
 def get_reference_text(data_path):
@@ -99,16 +108,19 @@ def get_reference_text(data_path):
     return high_risk_phrases, all_phrases
 
 def vader_sentiment(text):
+	"""Return the sentiment scores of a given text using VADER."""
 	analyzer = SentimentIntensityAnalyzer()
 	sentiment = analyzer.polarity_scores(text)
 	return sentiment["neg"], sentiment["neu"], sentiment["pos"], sentiment["compound"]
 
 def textblob_sentiment(text):
+	"""Return the sentiment scores of a given text using TextBlob."""
 	text_doc = TextBlob(text)
 	sentiment = text_doc.sentiment
 	return sentiment[0], sentiment[1]
 
 def df_sentiment(df):
+	"""Add sentiment analysis columns to the dataframe."""
 	df["content"] = df["content"].fillna("")
 	df["title"] = df["title"].fillna("")
 	df["full_text"] = df["title"] + " " + df["content"]
@@ -129,12 +141,14 @@ def df_sentiment(df):
 		df.at[i, "t_subjectivity"] = textblob_sentiment(text)[1]
 	return df
 
-def seed_embeddings(seed_phrases, model="all-MiniLM-L6-v2"):
+def seed_embeddings(seed_phrases: list, model="all-MiniLM-L6-v2"):
+	"""Generate embeddings for a list of seed phrases using a pre-trained Sentence Transformer model."""
 	model = SentenceTransformer(model)
 	embeddings = model.encode(seed_phrases, convert_to_tensor=True)
 	return embeddings
 
-def generate_ngrams(text, n=5):
+def generate_ngrams(text, n=4):
+    """Generate n-grams from a given text."""
     tokens = text.split()
     ngrams = []
     for i in range(len(tokens) - n + 1):
@@ -142,14 +156,14 @@ def generate_ngrams(text, n=5):
         ngrams.append(" ".join(ngram_tokens))
     return ngrams
 
-def detect_high_risk_ngrams(text, seed_phrases, n=5, threshold=0.7):
+def detect_relevant_ngrams(seed_phrases, ngrams, threshold=0.7):
+    """Get the most relevant n-grams from a list of seed phrases and deduplicate consecutive n-grams."""
     ref_embeddings = seed_embeddings(seed_phrases)
-    ngrams = generate_ngrams(text=text, n=n)
+    # ngrams = generate_ngrams(text=text, n=n)
     if not ngrams:
         return []
 
     ngram_embeddings = seed_embeddings(ngrams)
-
     cos_sim_matrix = util.cos_sim(ngram_embeddings, ref_embeddings)
     flagged_ngrams = []
     for i, ngram in enumerate(ngrams):
@@ -181,9 +195,11 @@ def detect_high_risk_ngrams(text, seed_phrases, n=5, threshold=0.7):
                     continue
         filtered_flagged.append(flagged_ngrams[i])
         i += 1
+		
     return filtered_flagged
 
 def risk_category(df):
+	"""Naively categorize the risk level of each post based on the detected risk words."""
 	for i, row in df.iterrows():
 		check_high_risk = False
 		check_moderate_risk = False
@@ -215,7 +231,7 @@ if __name__ == "__main__":
 	# df_with_sa.to_csv(rf"D:\humanai_crisis_analysis\data\reddit_data_with_sa.pkl", index=False)
 	test_df = df_with_sa.sample(500)
 	test_df["risk_words"] = test_df["full_text"].progress_apply(
-		lambda x: detect_high_risk_ngrams(x, all_phrases, n=5, threshold=0.6))
+		lambda x: detect_relevant_ngrams(x, all_phrases, n=5, threshold=0.6))
 	test_df = risk_category(test_df)
 	test_df.to_csv(rf"{data_path}\test_with_risk_words.csv", index=False)
 	

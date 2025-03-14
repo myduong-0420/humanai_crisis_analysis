@@ -11,6 +11,7 @@ from datetime import datetime
 tqdm.pandas()
 
 def load_secrets(filepath):
+    """Load Reddit API credentials from secret JSON file."""
     try:
         with open(filepath, 'r') as f:
             secrets = json.load(f)
@@ -23,6 +24,7 @@ def load_secrets(filepath):
         return None
     
 def connect_to_reddit(filepath):
+    """Connect to the Reddit API using the credentials."""
     secrets = load_secrets(filepath)
     if secrets:
         id = secrets.get('client_id')
@@ -37,6 +39,7 @@ def connect_to_reddit(filepath):
         return reddit
 
 def get_subreddit_titles(filepath, subreddit_name, post_limit=10):
+    """Get the titles of the most recent posts from a subreddit."""
     reddit = connect_to_reddit(filepath)  
     subreddit = reddit.subreddit(subreddit_name)  # Choose the subreddit
 
@@ -46,6 +49,7 @@ def get_subreddit_titles(filepath, subreddit_name, post_limit=10):
     return post_titles
 
 def get_posts_by_query(filepath, query, post_limit=10, subreddit_name="all"):
+    """Get posts from a subreddit based on a search query."""
     data = {"post_id": [], "title": [], "likes": [], "comments": [], "content": [], "date": []}
     reddit = connect_to_reddit(filepath)
 
@@ -66,18 +70,22 @@ def get_posts_by_query(filepath, query, post_limit=10, subreddit_name="all"):
 # nltk.download('punkt_tab')
 
 def remove_special_characters(text):
-	return re.sub(r'[^a-zA-Z0-9\s]', '', text)
+    """Clean the text by removing special characters."""
+    return re.sub(r'[^a-zA-Z0-9\s]', '', text)
 
 def remove_stopwords(text):
-	stop_words = set(stopwords.words('english'))
-	word_tokens = word_tokenize(text)
-	filtered_sentence = [w for w in word_tokens if not w.lower() in stop_words]
-	return filtered_sentence
+    """Remove stopwords from the text."""
+    stop_words = set(stopwords.words('english'))
+    word_tokens = word_tokenize(text)
+    filtered_sentence = [w for w in word_tokens if not w.lower() in stop_words]
+    return filtered_sentence
 
 def remove_emojis(text):
+    """Remove emojis from the text."""
     return demoji.replace(text, '')
 
 def full_preprocessing_pipeline(text):
+    """Apply the full preprocessing pipeline to the text."""
     if pd.isnull(text):
         text = ""
     text = str(text)
